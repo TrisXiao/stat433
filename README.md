@@ -86,7 +86,7 @@ cancel_per_day=flights%>%
 ggplot(cancel_per_day)+geom_point(aes(x=flights_num,y=cancel_num))
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+![](unnamed-chunk-3-1.png)<!-- -->
 
 ``` r
 cancel_and_delay=flights%>%
@@ -104,10 +104,10 @@ cancel_and_delay=flights%>%
 ggplot(cancel_and_delay)+geom_point(aes(x=avg_dep_delay,y=cancel_prob))
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-3-2.png)<!-- -->
+![](unnamed-chunk-3-2.png)<!-- -->
 
 ``` r
 ggplot(cancel_and_delay)+geom_point(aes(x=avg_arr_delay,y=cancel_prob))
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-3-3.png)<!-- -->
+![](unnamed-chunk-3-3.png)<!-- -->
