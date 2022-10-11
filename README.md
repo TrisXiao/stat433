@@ -1,113 +1,103 @@
-hw1
+433HW2
 ================
 Yang Xiao
-2022/9/27
+2022-10-11
 
-## How many flights have a missing dep\_time? What other variables are missing? What might these rows represent?
+## What time of day should you fly if you want to avoid delays as much as possible? Does this choice depend on anything? Season? Weather? Airport? Airline? Find three patterns (“null results” are ok!). Write your results into Rmarkdown. Include a short introduction that summarizes the three results. Then, have a section for each finding. Support each finding with data summaries and visualizations. Include your code when necessary. This shouldn’t be long, but it might take some time to find the things you want to talk about and lay them out in an orderly way.
 
-``` r
-library(nycflights13)
-library(tidyverse)
-```
-
-    ## -- Attaching packages --------------------------------------- tidyverse 1.3.1 --
-
-    ## v ggplot2 3.3.5     v purrr   0.3.4
-    ## v tibble  3.1.6     v dplyr   1.0.8
-    ## v tidyr   1.2.0     v stringr 1.4.0
-    ## v readr   2.1.2     v forcats 0.5.1
-
-    ## -- Conflicts ------------------------------------------ tidyverse_conflicts() --
-    ## x dplyr::filter() masks stats::filter()
-    ## x dplyr::lag()    masks stats::lag()
+To avoid delays as much as possible, I think it depends on hour,
+month(season), and airlines. Base on the results what I got below, the
+best way to avoid delays is choose the AS or HA airlines in Autumn
+around 5 to 7 am.
 
 ``` r
-filter(flights, is.na(dep_time))
+library("nycflights13")
+library("tidyverse")
 ```
 
-    ## # A tibble: 8,255 x 19
-    ##     year month   day dep_time sched_dep_time dep_delay arr_time sched_arr_time
-    ##    <int> <int> <int>    <int>          <int>     <dbl>    <int>          <int>
-    ##  1  2013     1     1       NA           1630        NA       NA           1815
-    ##  2  2013     1     1       NA           1935        NA       NA           2240
-    ##  3  2013     1     1       NA           1500        NA       NA           1825
-    ##  4  2013     1     1       NA            600        NA       NA            901
-    ##  5  2013     1     2       NA           1540        NA       NA           1747
-    ##  6  2013     1     2       NA           1620        NA       NA           1746
-    ##  7  2013     1     2       NA           1355        NA       NA           1459
-    ##  8  2013     1     2       NA           1420        NA       NA           1644
-    ##  9  2013     1     2       NA           1321        NA       NA           1536
-    ## 10  2013     1     2       NA           1545        NA       NA           1910
-    ## # ... with 8,245 more rows, and 11 more variables: arr_delay <dbl>,
-    ## #   carrier <chr>, flight <int>, tailnum <chr>, origin <chr>, dest <chr>,
-    ## #   air_time <dbl>, distance <dbl>, hour <dbl>, minute <dbl>, time_hour <dttm>
-
-The arr\_time and dep\_delay are also missing. If all these three data
-are missing, there is a high probability that the flight was canceled.
-
-## Currently dep\_time and sched\_dep\_time are convenient to look at, but hard to compute with because they’re not really continuous numbers. Convert them to a more convenient representation of number of minutes since midnight.
+    ## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.2 ──
+    ## ✔ ggplot2 3.3.6      ✔ purrr   0.3.5 
+    ## ✔ tibble  3.1.8      ✔ dplyr   1.0.10
+    ## ✔ tidyr   1.2.1      ✔ stringr 1.4.1 
+    ## ✔ readr   2.1.3      ✔ forcats 0.5.2 
+    ## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+    ## ✖ dplyr::filter() masks stats::filter()
+    ## ✖ dplyr::lag()    masks stats::lag()
 
 ``` r
-flights_time=mutate(flights,
-                    dep_time_mins=(dep_time%/%100*60+dep_time%%100)%%1440,
-                    sched_dep_time_mins=(sched_dep_time%/%100*60
-                                         +sched_dep_time%%100)%%1440)
-select(flights_time,dep_time,dep_time_mins,sched_dep_time,sched_dep_time_mins)
+flights %>% group_by(carrier) %>%
+  summarise(arr_delay=mean(arr_delay,na.rm=T)) %>%
+  arrange(arr_delay)
 ```
 
-    ## # A tibble: 336,776 x 4
-    ##    dep_time dep_time_mins sched_dep_time sched_dep_time_mins
-    ##       <int>         <dbl>          <int>               <dbl>
-    ##  1      517           317            515                 315
-    ##  2      533           333            529                 329
-    ##  3      542           342            540                 340
-    ##  4      544           344            545                 345
-    ##  5      554           354            600                 360
-    ##  6      554           354            558                 358
-    ##  7      555           355            600                 360
-    ##  8      557           357            600                 360
-    ##  9      557           357            600                 360
-    ## 10      558           358            600                 360
-    ## # ... with 336,766 more rows
-
-## Look at the number of canceled flights per day. Is there a pattern? Is the proportion of canceled flights related to the average delay? Use multiple dyplr operations, all on one line, concluding with ggplot(aes(x=,y=))+geom\_point()
+    ## # A tibble: 16 × 2
+    ##    carrier arr_delay
+    ##    <chr>       <dbl>
+    ##  1 AS         -9.93 
+    ##  2 HA         -6.92 
+    ##  3 AA          0.364
+    ##  4 DL          1.64 
+    ##  5 VX          1.76 
+    ##  6 US          2.13 
+    ##  7 UA          3.56 
+    ##  8 9E          7.38 
+    ##  9 B6          9.46 
+    ## 10 WN          9.65 
+    ## 11 MQ         10.8  
+    ## 12 OO         11.9  
+    ## 13 YV         15.6  
+    ## 14 EV         15.8  
+    ## 15 FL         20.1  
+    ## 16 F9         21.9
 
 ``` r
-cancel_per_day=flights%>%
-  mutate(cancel=(is.na(arr_delay)|is.na(dep_delay)))%>%
-  group_by(year,month,day)%>%
-  summarise(cancel_num=sum(cancel),flights_num=n())
+flights %>% group_by(month) %>%
+  summarise(arr_delay=mean(arr_delay,na.rm=T)) %>%
+  arrange(arr_delay)
 ```
 
-    ## `summarise()` has grouped output by 'year', 'month'. You can override using the
-    ## `.groups` argument.
+    ## # A tibble: 12 × 2
+    ##    month arr_delay
+    ##    <int>     <dbl>
+    ##  1     9    -4.02 
+    ##  2    10    -0.167
+    ##  3    11     0.461
+    ##  4     5     3.52 
+    ##  5     2     5.61 
+    ##  6     3     5.81 
+    ##  7     8     6.04 
+    ##  8     1     6.13 
+    ##  9     4    11.2  
+    ## 10    12    14.9  
+    ## 11     6    16.5  
+    ## 12     7    16.7
 
 ``` r
-ggplot(cancel_per_day)+geom_point(aes(x=flights_num,y=cancel_num))
+flights %>% group_by(hour) %>%
+  summarise(arr_delay=mean(arr_delay,na.rm=T)) %>%
+  arrange(arr_delay)
 ```
 
-![](unnamed-chunk-3-1.png)<!-- -->
-
-``` r
-cancel_and_delay=flights%>%
-  mutate(cancel=(is.na(arr_delay)|is.na(dep_delay)))%>%
-  group_by(year,month,day)%>%
-  summarise(cancel_prob=mean(cancel),
-            avg_dep_delay=mean(dep_delay,na.rm=T),
-            avg_arr_delay=mean(arr_delay,na.rm=T))%>%ungroup()
-```
-
-    ## `summarise()` has grouped output by 'year', 'month'. You can override using the
-    ## `.groups` argument.
-
-``` r
-ggplot(cancel_and_delay)+geom_point(aes(x=avg_dep_delay,y=cancel_prob))
-```
-
-![](unnamed-chunk-3-2.png)<!-- -->
-
-``` r
-ggplot(cancel_and_delay)+geom_point(aes(x=avg_arr_delay,y=cancel_prob))
-```
-
-![](unnamed-chunk-3-3.png)<!-- -->
+    ## # A tibble: 20 × 2
+    ##     hour arr_delay
+    ##    <dbl>     <dbl>
+    ##  1     7    -5.30 
+    ##  2     5    -4.80 
+    ##  3     6    -3.38 
+    ##  4     9    -1.45 
+    ##  5     8    -1.11 
+    ##  6    10     0.954
+    ##  7    11     1.48 
+    ##  8    12     3.49 
+    ##  9    13     6.54 
+    ## 10    14     9.20 
+    ## 11    23    11.8  
+    ## 12    15    12.3  
+    ## 13    16    12.6  
+    ## 14    18    14.8  
+    ## 15    22    16.0  
+    ## 16    17    16.0  
+    ## 17    19    16.7  
+    ## 18    20    16.7  
+    ## 19    21    18.4  
+    ## 20     1   NaN
